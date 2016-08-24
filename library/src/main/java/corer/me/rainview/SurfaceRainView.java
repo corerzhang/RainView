@@ -85,7 +85,7 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
                 if (DEBUG){
                     long time= SystemClock.elapsedRealtime();
-                    Log.i(TAG,"RainView FPS="+(1000/(time-mTime)));
+                    Log.i(TAG,"SurfaceRainView FPS="+(1000/(time-mTime)));
                     mTime=time;
                 }
 
