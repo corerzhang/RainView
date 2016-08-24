@@ -6,7 +6,9 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,32 +17,13 @@ import android.view.ViewGroup;
 /**
  * Created by corer.zhang on 16/7/11.
  */
-public class RainView extends View {
+public class RainView extends View implements IRainView {
 
-    public interface RainCallback {
-        void onRainStart();
 
-        void onRainProgress(float progress);
+    private static final String TAG=RainView.class.getSimpleName();
+    private static  final boolean DEBUG=true;
 
-        void onRainEnd();
-    }
-
-    public static class RainCallbackAdapter implements RainCallback {
-        @Override
-        public void onRainStart() {
-        }
-
-        @Override
-        public void onRainProgress(float progress) {
-
-        }
-
-        @Override
-        public void onRainEnd() {
-        }
-    }
-
-    RainCallback mCallback;
+    IRainView.RainCallback mCallback;
     IRainController mRainController;
 
     boolean shouldRender;
@@ -63,14 +46,17 @@ public class RainView extends View {
     }
 
 
+    @Override
     public void setRainCallback(RainCallback callback) {
         this.mCallback = callback;
     }
 
+    @Override
     public void setRainController(IRainController controller) {
         mRainController = controller;
     }
 
+    @Override
     public void startRain(final Activity activity) {
 
         if (raining) {
@@ -131,6 +117,7 @@ public class RainView extends View {
 
 
 
+    long mTime;
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -148,6 +135,14 @@ public class RainView extends View {
 
         //判断是否终止item的绘制
         boolean isAllOver = mRainController != null ? mRainController.handleOnDraw(canvas, width, height) : true;
+
+        if (DEBUG){
+            long time= SystemClock.elapsedRealtime();
+            Log.i(TAG,"RainView FPS="+(1000/(time-mTime)));
+            mTime=time;
+        }
+
+
         float progress = mRainController != null ? mRainController.progress() : 0;
         callbackProgress(progress);
         //判断是否全部的item都已经绘制完成
