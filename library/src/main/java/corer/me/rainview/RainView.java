@@ -137,8 +137,10 @@ public class RainView extends View implements IRainView {
         boolean isAllOver = mRainController != null ? mRainController.handleOnDraw(canvas, width, height) : true;
 
         if (DEBUG){
-            long time= SystemClock.elapsedRealtime();
-            Log.i(TAG,"RainView FPS="+(1000/(time-mTime)));
+            long time= SystemClock.uptimeMillis();
+            long deltaTime=time-mTime;
+            Log.i(TAG,"RainView deltaTime="+deltaTime);
+            Log.i(TAG,"RainView FPS="+(1000/(deltaTime)));
             mTime=time;
         }
 

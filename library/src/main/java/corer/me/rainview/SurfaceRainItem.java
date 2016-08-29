@@ -30,7 +30,7 @@ public class SurfaceRainItem implements IRainItem {
 
     int mTimePass;
 
-    float mDuring;
+    float mSpeed;
 
     int mMinAlpha = (int) (255 * 0.5);
 
@@ -40,7 +40,9 @@ public class SurfaceRainItem implements IRainItem {
 
     float mStartTime;
 
-    public SurfaceRainItem(Context context, int resId, int startX, int startY, int endY,float during, int delay) {
+    float mLength;
+
+    public SurfaceRainItem(Context context, int resId, int startX, int startY, int endY,float speed, int delay) {
 
         mEvaluator=new FloatEvaluator();
 
@@ -57,14 +59,17 @@ public class SurfaceRainItem implements IRainItem {
         mStartY = startY - mItemHeight;
         mEndY = endY + mItemHeight;
 
+        mLength=mEndY-mStartY;
 
-        mDuring=during;
+        mCurrentY=mStartY;
+        mSpeed=speed;
         mDelay = delay;
 
         mPaint = new Paint();
         mPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setAlpha(mMinAlpha);
+
     }
 
 
@@ -85,17 +90,14 @@ public class SurfaceRainItem implements IRainItem {
            return;
         }
 
-        float fraction=Math.min(((deltaTime-mDelay)/mDuring),1f);
-
-        mProgress = fraction;
-        mCurrentY = mEvaluator.evaluate(fraction,mStartY,mEndY);
-
-
         //已经绘制完
-        if (isOut()){
+        if (mCurrentY>=mEndY){
             return;
         }
 
+        mCurrentY = mCurrentY + mSpeed;
+
+        mProgress = Math.min(mCurrentY >= 0 ? (mCurrentY) / mLength : 0, 1);
         mPaint.setAlpha((int) (Math.max(255 * (mProgress < 0.5 ? mProgress : (1 - mProgress)), mMinAlpha)));
         canvas.drawBitmap(mBitmap, mStartX, mCurrentY, mPaint);
 
@@ -103,7 +105,7 @@ public class SurfaceRainItem implements IRainItem {
 
     @Override
     public boolean isOut() {
-        return mProgress>=1f;
+        return mCurrentY>=mEndY;
     }
 
 

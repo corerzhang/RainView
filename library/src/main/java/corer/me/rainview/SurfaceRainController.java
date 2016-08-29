@@ -14,11 +14,9 @@ import java.util.Random;
  */
 public class SurfaceRainController implements IRainController {
 
-    private static final float ITEM_COUNT = 70;
-    private static final int MAX_DELAY=4000;
-    private static final int MIN_DELAY=0;
-    private static final int MAX_DURING=2000;
-    private static final int MIN_DURING=1000;
+    private static final float ITEM_COUNT = 100;
+    private static final int MAX_DELAY=5000;
+    private static final int MAX_INCREMENTY=30;
     List<IRainItem> mRainItems = new ArrayList<>();
     int[] mDrawablesResId;
     float mProgress;
@@ -65,10 +63,10 @@ public class SurfaceRainController implements IRainController {
             }
             int endY = (int) (incrementY + h);
 
-            int during = random.nextInt(MAX_DURING)%(MAX_DURING-MIN_DURING+1) + MIN_DURING;
-            int delay = random.nextInt(MAX_DELAY)%(MAX_DELAY-MIN_DELAY+1) + MIN_DELAY;
+            int delay = random.nextInt(MAX_DELAY); //item延迟出现的时长
+            int speed = MAX_INCREMENTY; //item每次的y轴偏移量
             int resId = mDrawablesResId[random.nextInt(mDrawablesResId.length)];
-            mRainItems.add(new SurfaceRainItem(parent.getContext(), resId, startX, startY, endY,during, delay));
+            mRainItems.add(new SurfaceRainItem(parent.getContext(), resId, startX, startY, endY, speed, delay));
         }
     }
 

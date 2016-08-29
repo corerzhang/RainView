@@ -37,7 +37,7 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
     SurfaceHolder mSurfaceHolder;
 
-    float mTime;
+    long mTime;
     public SurfaceRainView(Context context) {
         this(context, null);
     }
@@ -76,18 +76,22 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
                     mSurfaceHolder.unlockCanvasAndPost(canvas);
                 }
 
+                if (DEBUG){
+                    long time= SystemClock.uptimeMillis();
+                    long deltaTime=time-mTime;
+                    Log.i(TAG,"SurfaceRainView deltaTime="+deltaTime);
+                    Log.i(TAG,"SurfaceRainView FPS="+(1000/(deltaTime)));
+                    mTime=time;
+                }
+
                 if (isOver){
                     mHandler.removeMessages(0);
                     stopRain();
                 }else {
-                    mHandler.sendEmptyMessageDelayed(0,10);
+                    mHandler.sendEmptyMessageDelayed(0,0);
                 }
 
-                if (DEBUG){
-                    long time= SystemClock.elapsedRealtime();
-                    Log.i(TAG,"SurfaceRainView FPS="+(1000/(time-mTime)));
-                    mTime=time;
-                }
+
 
             }
         };
@@ -107,7 +111,7 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
     @Override
     public void startRain(final Activity activity) {
-        mTime=SystemClock.elapsedRealtime();
+        mTime=SystemClock.uptimeMillis();
         if (raining) {
             return;
         }
