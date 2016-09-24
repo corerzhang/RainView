@@ -47,6 +47,7 @@ public class SurfaceRainItem implements IRainItem {
         mBitmap = BitmapFactory.decodeResource(context.getResources(), resId,options);
         mItemHeight = mBitmap.getHeight();
         mItemWidth = mBitmap.getWidth();
+        startX=mItemWidth;
         mStartX = startX;
         mStartY = startY - mItemHeight;
         mEndY = endY + mItemHeight;
