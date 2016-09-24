@@ -106,9 +106,15 @@ public class RainController implements IRainController {
             }
         }
         mProgress = allProgress / ITEM_COUNT;
-
+        mOver=isAllOver;
         return isAllOver;
 
+    }
+
+    private boolean mOver;
+    @Override
+    public boolean isOver() {
+        return mOver;
     }
 
     @Override
@@ -123,6 +129,7 @@ public class RainController implements IRainController {
                 mRainItem.reset();
             }
         }
+        mOver=false;
     }
 
     @Override
@@ -133,5 +140,6 @@ public class RainController implements IRainController {
             }
             mRainItems.clear();
         }
+        mOver=false;
     }
 }
