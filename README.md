@@ -35,6 +35,7 @@
                Toast.makeText(MainActivity.this, "SurfaceRainView over", Toast.LENGTH_SHORT).show();
           }
        });
+   mSurfaceRainView.startRain(MainActivity.this);    
 ```                         
 
 
