@@ -18,4 +18,6 @@ public interface IRainController {
 
     float progress();
 
+    boolean isOver();
+
 }

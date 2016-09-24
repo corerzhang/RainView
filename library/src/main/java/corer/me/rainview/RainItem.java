@@ -76,6 +76,7 @@ public class RainItem implements IRainItem {
 
         //已经绘制完
         if (mCurrentY>=mEndY){
+            mProgress=1;
             return;
         }
 

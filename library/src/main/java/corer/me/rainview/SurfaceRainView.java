@@ -1,5 +1,6 @@
 package corer.me.rainview;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -19,25 +20,55 @@ import android.view.ViewGroup;
 /**
  * Created by corer.zhang on 16/8/23.
  */
-public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHolder.Callback {
+public class SurfaceRainView extends SurfaceView implements IRainView, SurfaceHolder.Callback {
 
-    private static final String TAG=RainView.class.getSimpleName();
-    private static  final boolean DEBUG=true;
+    private static final String TAG = RainView.class.getSimpleName();
+    private static final boolean DEBUG = true;
 
     RainCallback mCallback;
     IRainController mRainController;
 
-    HandlerThread mHandlerThread;
-    Handler mHandler;
-
 
     boolean canvasAvailable;
-
     boolean raining;
+
+    private int mWidth, mHeight;
+    long mTime;
 
     SurfaceHolder mSurfaceHolder;
 
-    long mTime;
+
+    private static final int MSG_DRAW = 1;
+    HandlerThread mHandlerThread;
+    Handler mHandler;
+    private DrawTask mDrawTask;
+    private Handler.Callback mHandlerCallback = new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message message) {
+
+            switch (message.what) {
+                case MSG_DRAW:
+                    if (!canvasAvailable) {
+                        mHandler.removeMessages(MSG_DRAW);
+                        return true;
+                    }
+
+                    mHandler.removeMessages(MSG_DRAW);
+                    mHandler.post(mDrawTask);
+
+                    if (!mRainController.isOver()) {
+                        mHandler.sendEmptyMessageDelayed(MSG_DRAW, 10);
+                    } else {
+                        stopRain();
+                    }
+                    break;
+            }
+
+            return true;
+        }
+    };
+
+
     public SurfaceRainView(Context context) {
         this(context, null);
     }
@@ -48,53 +79,14 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
     public SurfaceRainView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        setWillNotDraw(true);
         setZOrderOnTop(true);
-        setWillNotCacheDrawing(true);
-        setDrawingCacheEnabled(false);
-         mSurfaceHolder = getHolder();
+        setVisibility(INVISIBLE);
+        mSurfaceHolder = getHolder();
         mSurfaceHolder.addCallback(this);
         mSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
-
-        mHandlerThread =new HandlerThread("render");
+        mHandlerThread = new HandlerThread("SurfaceRainViewRender");
         mHandlerThread.start();
-
-
-        mHandler=new Handler(mHandlerThread.getLooper()){
-            @Override
-            public void dispatchMessage(Message msg) {
-                if (msg.what!=0){
-                    return;
-                }
-                if (!canvasAvailable){
-                    return;
-                }
-                boolean isOver = false;
-                Canvas canvas=mSurfaceHolder.lockCanvas();
-                if (canvas!=null){
-                    isOver= mRainController.handleOnDraw(canvas,getMeasuredWidth(),getMeasuredHeight());
-                    mSurfaceHolder.unlockCanvasAndPost(canvas);
-                }
-
-                if (DEBUG){
-                    long time= SystemClock.uptimeMillis();
-                    long deltaTime=time-mTime;
-                    Log.i(TAG,"SurfaceRainView deltaTime="+deltaTime);
-                    Log.i(TAG,"SurfaceRainView FPS="+(1000/(deltaTime)));
-                    mTime=time;
-                }
-
-                if (isOver){
-                    mHandler.removeMessages(0);
-                    stopRain();
-                }else {
-                    mHandler.sendEmptyMessageDelayed(0,0);
-                }
-
-
-
-            }
-        };
+        mHandler = new Handler(mHandlerThread.getLooper(), mHandlerCallback);
 
     }
 
@@ -111,7 +103,7 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
     @Override
     public void startRain(final Activity activity) {
-        mTime=SystemClock.uptimeMillis();
+        mTime = SystemClock.uptimeMillis();
         if (raining) {
             return;
         }
@@ -129,6 +121,13 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
         callbackStart();
         setVisibility(VISIBLE);
+
+        post(new Runnable() {
+            @Override
+            public void run() {
+                mHandler.sendEmptyMessage(MSG_DRAW);
+            }
+        });
 
     }
 
@@ -149,24 +148,80 @@ public class SurfaceRainView extends SurfaceView implements IRainView ,SurfaceHo
 
     }
 
+    private class DrawTask implements Runnable {
+        private SurfaceHolder mHolder;
+
+        public DrawTask(SurfaceHolder holder) {
+            mHolder = holder;
+        }
+
+        @SuppressLint("WrongCall")
+        @Override
+        public void run() {
+            Canvas canvas = null;
+            try {
+                canvas = mHolder.lockCanvas();
+                if (canvas == null) {
+                    mHandler.removeMessages(MSG_DRAW);
+                    return;
+                }
+                synchronized (mHolder) {
+                    if (!canvasAvailable) {
+                        mHandler.removeMessages(MSG_DRAW);
+                        stopRain();
+                        return;
+                    }
+                    logFPS();
+                    mRainController.handleOnDraw(canvas, mWidth, mHeight);
+                    callbackProgress(mRainController.progress());
+                }
+            } finally {
+                if (canvas != null) {
+                    try {
+                        mHolder.unlockCanvasAndPost(canvas);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+    private void logFPS(){
+        if (DEBUG) {
+            long time = SystemClock.uptimeMillis();
+            long deltaTime = time - mTime;
+            Log.i(TAG, "SurfaceRainView deltaTime=" + deltaTime);
+            Log.i(TAG, "SurfaceRainView FPS=" + (1000 / (deltaTime)));
+            mTime = time;
+        }
+    }
 
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         canvasAvailable = true;
-        mHandler.sendEmptyMessageDelayed(0,10);
-
+        if (mDrawTask == null) {
+            mDrawTask = new DrawTask(mSurfaceHolder);
+        }
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
+        this.mWidth = width;
+        this.mHeight = height;
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         canvasAvailable = false;
-        stopRain();
+        if (raining) {
+            stopRain();
+        }
+
     }
 
     @Override
