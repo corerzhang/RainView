@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import static android.R.attr.startY;
-
 /**
  * Created by corer.zhang on 16/8/23.
  */
