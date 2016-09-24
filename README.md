@@ -1,7 +1,5 @@
 # RainView
->一个飘雨动画的控件, 有两种实现, 它们都实现了IRainView接口
-1. RainView
-2. SurfaceRainView
+>一个飘雨动画的控件, 有两种实现RainView和SurfaceRainView, 它们都实现了IRainView接口
 
 
 
